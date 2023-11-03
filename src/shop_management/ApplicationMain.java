@@ -10,8 +10,6 @@ public class ApplicationMain {
 
 	public static void main(String[] args) throws IOException {
 
-
-
 		Scanner scanner = new Scanner(System.in);
 
 		System.out.println("***Welcome To Shop Management System****");

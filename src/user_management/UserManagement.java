@@ -1,30 +1,16 @@
 package user_management;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Scanner;
 
 import db_operations.DBUtils;
 
 public class UserManagement {
-	static ArrayList<User> al = new ArrayList<>();
-
-	static {
-		try {
-			loadDataFromFileToArrayList();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	public static void userManagement() throws IOException {
-//		loadDataFromFileToArrayList();
+
 		Scanner scanner = new Scanner(System.in);
 		boolean canIKeepRunningTheProgram = true;
 
@@ -42,33 +28,24 @@ public class UserManagement {
 			int optionSelectedByUser = scanner.nextInt();
 
 			if (optionSelectedByUser == UserOptions.QUIT) {
-				
 				System.out.println("Program Closed!!!");
 				canIKeepRunningTheProgram = false;
-
 			} else if (optionSelectedByUser == UserOptions.ADD_USER) {
-
 				addUser();
 				System.out.println("\n");
-
 			} else if (optionSelectedByUser == UserOptions.EDIT_USER) {
-
 				System.out.println("Enter User Name To Edit:");
 				scanner.nextLine();
 				String en = scanner.nextLine();
 				editUser(en);
 				System.out.println("\n");
-
 			} else if (optionSelectedByUser == UserOptions.SEARCH_USER) {
-
 				System.out.println("Enter User Name to Search:");
 				scanner.nextLine();
 				String sn = scanner.nextLine();
 				searchUser(sn);
 				System.out.println("\n");
-
 			} else if (optionSelectedByUser == UserOptions.DELETE_USER) {
-
 				System.out.println("Enter User Name to Delete :");
 				scanner.nextLine();
 				String dn = scanner.nextLine();
@@ -138,88 +115,47 @@ public class UserManagement {
 				System.out.println("New User Role: ");
 				String newUserRole = scanner.nextLine();
 
-				String query = "UPDATE User SET Username = '" + newUserName + "', " + "LoginName = '" + newLoginName
-						+ "', " + "Password = '" + newPassword + "', " + "ConfirmPassword = '" + newConfirmPassword
-						+ "'," + "UserRole = '" + newUserRole + "'" + "WHERE Username = '" + newUserName + "'";
+				String query = "UPDATE Users SET userID= '" + newUserID + "', Username = '" + newUserName + "', "
+						+ "LoginName = '" + newLoginName + "', " + "Password = '" + newPassword + "', "
+						+ "ConfirmPassword = '" + newConfirmPassword + "'," + "UserRole = '" + newUserRole + "'"
+						+ "WHERE Username = '" + newUserName + "'";
 
 				DBUtils.executeQuery(query);
 				System.out.println("User Information Updated");
-			} else {
-				System.out.println("User Not Found!!!");
+				return;
 			}
-
 		} catch (SQLException e) {
-			e.printStackTrace();
-
+			System.out.println("User Not Found");
 		}
+		System.out.println("User Not Found");
 	}
 
 	public static void deleteUser(String userName) {
+		String query = "Delete from Users where userName = '" + userName + "'";
+		DBUtils.executeQuery(query);
+		System.out.println("User Deleted Successfully");
 
-		Iterator<User> itr = al.iterator();
-
-		while (itr.hasNext()) {
-			User user = itr.next();
-			if (user.userName.equalsIgnoreCase(userName)) {
-				itr.remove();
-				System.out.println("User " + user.userName + " has been Deleted!!!");
-				break;
-			}
-		}
-		System.out.println("User Not Found!!!");
 	}
 
 	public static void searchUser(String userName) {
+		String query = "Select * from Users where userName = '" + userName + "' ";
 
-		for (User user : al) {
-			if (user.userName.equalsIgnoreCase(userName)) {
-				System.out.println("User ID: " + user.userID);
-				System.out.println("User Name: " + user.userName);
-				System.out.println("Login Name: " + user.loginName);
-				System.out.println("Password: " + user.password);
-				System.out.println("User Role: " + user.userRole);
-				return;
-			}
-		}
-		System.out.println("User not Found.");
-	}
-
-	public static void loadDataFromFileToArrayList() throws IOException {
-
-		File file = new File("C:\\Users\\yash\\eclipse-workspace\\ShopManagement\\src\\user_management\\Users.csv");
-		FileReader fr = new FileReader(file);
-		BufferedReader br = new BufferedReader(fr);
-		String line = "";
-
-		ResultSet rs = DBUtils.executeQueryGetResult("SELECT * FROM users");
+		ResultSet rs = DBUtils.executeQueryGetResult(query);
 		try {
 			while (rs.next()) {
-				User user = new User();
-
-				user.userName = rs.getString(1);
-				user.loginName = rs.getString(2);
-				user.password = rs.getString(3);
-				user.userRole = rs.getString(4);
-
-				al.add(user);
+				if (rs.getString(userName).equalsIgnoreCase(userName)) {
+					System.out.println("User Name: " + rs.getString("userName"));
+					System.out.println("Login Name: " + rs.getString("loginName"));
+					System.out.println("Password: " + rs.getString("password"));
+					System.out.println("User Role: " + rs.getString("userRole"));
+					return;
+				}
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("User Not Found");
 		}
-
 	}
 
-	/*
-	 * public static boolean validateUserAndPassword(String loginName1, String
-	 * password1) {
-	 * 
-	 * Iterator<User> userIterator = al.iterator(); while (userIterator.hasNext()) {
-	 * User user =userIterator.next(); if
-	 * (user.loginName.equalsIgnoreCase(loginName1) &&
-	 * user.password.equalsIgnoreCase(password1)) { return true; } } return false;
-	 * 
-	 * }
-	 */
 	public static boolean validateUserandPassword(String loginName, String password) {
 
 		String query = "Select * from users where loginName='" + loginName + "' AND pasword = '" + password + "'";

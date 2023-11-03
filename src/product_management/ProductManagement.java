@@ -1,24 +1,22 @@
 package product_management;
 
 import java.io.*;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Scanner;
 
+import db_operations.DBUtils;
+
 public class ProductManagement {
-	static ArrayList<Product> al = new ArrayList<Product>();
 
 	public static void productManagement() throws IOException {
-		loadProductFromFile();
 		Scanner scanner = new Scanner(System.in);
 		boolean canIKeepRunningTheProgram = true;
-
 		while (canIKeepRunningTheProgram == true) {
 			System.out.print("*****WELCOME TO PRODUCT MANAGEMENT ****");
 			System.out.print("\n");
-
 			System.out.println("What You Want To Do?");
-
 			System.out.println("1.Add Product");
 			System.out.println("2.Edit Product");
 			System.out.println("3.Delete Product");
@@ -28,22 +26,8 @@ public class ProductManagement {
 			int productChoice = scanner.nextInt();
 
 			if (productChoice == ProductOptions.QUIT) {
-				File file = new File(
-						"C:\\Users\\yash\\eclipse-workspace\\ShopManagement\\src\\product_management\\Products.csv");
-				FileWriter fw = new FileWriter(file, false);
-				BufferedWriter bw = new BufferedWriter(fw);
-
-				for (Product product : al) {
-					String productLine = String.join(",", product.getProductName(), product.getProductID(),
-							product.getAvailableQuantity(), product.getProductCategory());
-					bw.write(productLine + "\n");
-				}
-				bw.close();
-				fw.close();
-				file = null;
 				System.out.println("Program Closed!!!!!");
 				canIKeepRunningTheProgram = false;
-
 			} else if (productChoice == ProductOptions.ADD_PRODUCT) {
 				addProduct();
 				System.out.println("\n");
@@ -88,93 +72,71 @@ public class ProductManagement {
 
 		System.out.print("Product Category: ");
 		productObject.productCategory = scanner.nextLine();
-		al.add(productObject);
-		System.out.println("Product Added Successfully!!");
 
+		System.out.println("Product Added Successfully!!");
+		String query = "INSERT INTO product(productID , productName , availableQuantity , productPrice , productCategory ) VALUES ( '"
+				+ productObject.productID + "' , '" + productObject.productName + "' , '"
+				+ productObject.availableQuantity + "' , '" + productObject.productPrice + "' , '"
+				+ productObject.productCategory + "' );";
+		DBUtils.executeQuery(query);
+		System.out.println("Product Added Successfully!!");
 	}
 
 	public static void editProduct(String productName) {
+		Product product = new Product();
 
-		for (Product product : al) {
+		if (product.productName.equalsIgnoreCase(productName)) {
+			Scanner scanner = new Scanner(System.in);
 
-			if (product.productName.equalsIgnoreCase(productName)) {
-				Scanner scanner = new Scanner(System.in);
+			System.out.println("Editing Product : " + product.productName);
 
-				System.out.println("Editing Product : " + product.productName);
+			System.out.println("New Product Name: ");
+			String newProductName = scanner.nextLine();
 
-				System.out.println("New Product Name: ");
-				product.productName = scanner.nextLine();
+			System.out.println("New Product ID: ");
+			String newProductID = scanner.nextLine();
 
-				System.out.println("New Product ID: ");
-				product.productID = scanner.nextLine();
+			System.out.println("New Quantity: ");
+			String newAvailableQuantity = scanner.nextLine();
 
-				System.out.println("New Quantity: ");
-				product.availableQuantity = scanner.nextLine();
+			System.out.println("New Product Price: ");
+			String newProductPrice = scanner.nextLine();
 
-				System.out.println("New Product Price: ");
-				product.productPrice = scanner.nextLine();
-
-				System.out.println("New Product Category: ");
-				product.productCategory = scanner.nextLine();
-
-				System.out.println("Product Information Updated");
-				return;
-
-			}
+			System.out.println("New Product Category: ");
+			String newProductCategory = scanner.nextLine();
+			String query = "Update into product Set productID='" + newProductID + "',productName='" + newProductName
+					+ "',availableQuantity = '" + newAvailableQuantity + "',productPrice='" + newProductPrice
+					+ "',productCategory='" + newProductCategory + "'";
+			DBUtils.executeQuery(query);
+			System.out.println("Product Information Updated");
+			return;
 		}
 		System.out.println("Product Not Found!!!");
 	}
 
 	public static void deleteProduct(String productName) {
-		Iterator<Product> itr = al.iterator();
+		String query = "DElETE FROM product WHERE productName='" + productName + "'";
+		DBUtils.executeQuery(query);
+		System.out.println("User Deleted Successfully!!!");
+		System.out.println("\n");
 
-		while (itr.hasNext()) {
-			Product product = itr.next();
-			if (product.productName.equalsIgnoreCase(productName)) {
-				itr.remove();
-				System.out.println("Product " + product.productName + " has been Deleted!!!");
-				break;
-			}
-		}
-		System.out.println("Product Not Found!!!");
 	}
 
 	public static void searchProduct(String productName) {
-		for (Product product : al) {
-			if (product.productName.equalsIgnoreCase(productName)) {
-				System.out.println("Product Name: " + product.productName);
-				System.out.println("Product ID: " + product.productID);
-				System.out.println("Quantity: " + product.availableQuantity);
-				System.out.println("Product Category: " + product.productCategory);
-				return;
+		String query = "Select * from product where productName = '" + productName + "' ";
+		ResultSet rs = DBUtils.executeQueryGetResult(query);
+		try {
+			while (rs.next()) {
+				if (rs.getString("productName").equalsIgnoreCase(productName)) {
+					System.out.println("Product Name: " + rs.getString("productName"));
+					System.out.println("Product ID: " + rs.getString("productID"));
+					System.out.println("Quantity: " + rs.getString("availableQuantity"));
+					System.out.println("Product Category: " + rs.getString("productCategory"));
+					return;
+				}
 			}
+		} catch (Exception e) {
+			System.out.println("Product not Found.");
 		}
-		System.out.println("Product not Found.");
 	}
-
-	public static void loadProductFromFile() throws IOException {
-		File file = new File(
-				"C:\\Users\\yash\\eclipse-workspace\\ShopManagement\\src\\product_management\\Products.csv");
-		FileReader fr = new FileReader(file);
-		BufferedReader br = new BufferedReader(fr);
-		String line = "";
-
-		while ((line = br.readLine()) != null) {
-			String[] productDetails = line.split(",");
-			if (productDetails.length == 4) {
-				Product product = new Product();
-				product.setProductName(productDetails[0]);
-				product.setProductID(productDetails[1]);
-				product.setAvailableQuantity(productDetails[2]);
-				product.setProductCategory(productDetails[3]);
-				al.add(product);
-			}
-
-		}
-		br.close();
-		fr.close();
-		file = null;
-	}
-	
-
 }
